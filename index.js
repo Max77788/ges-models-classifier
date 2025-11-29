@@ -78,6 +78,10 @@ function getMaxLabel(probMap) {
   return { label: bestLabel, probability: bestProb };
 }
 
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
 // POST /classify
 // Body: { imageUrls: [ "https://...", ... ] }
 app.post("/classify", async (req, res) => {
