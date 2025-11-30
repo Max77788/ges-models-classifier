@@ -7,6 +7,27 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+const LABEL_MAP = {
+  // Civilian/Hybrid model labels
+  civilian: "Civilian",
+  hybrid: "Hybrid",
+
+  // SuperModel/Common Model labels
+  supermodel: "Super Model",
+  commonmodel: "Common Model",
+
+  // NOT/MODEL model labels
+  Model: "Model",
+  "NOT Model": "NOT Model",
+
+  // Add additional mappings if needed
+};
+
+function mapLabel(tagName) {
+  return LABEL_MAP[tagName] || tagName;
+}
+
+
 /**
  * Call Azure Custom Vision for a batch of image URLs in parallel.
  * Returns an array: [{ imageUrl, predictions: [{ tagName, probability }, ...] }, ...]
@@ -29,7 +50,7 @@ async function batchPredict(imageUrls, endpointUrl, predictionKey) {
     return {
       imageUrl,
       predictions: predictions.map((p) => ({
-        tagName: p.tagName,
+        tagName: mapLabel(p.tagName),
         probability: p.probability,
       })),
     };
@@ -49,8 +70,10 @@ function averageByTag(perImage) {
   for (const img of perImage) {
     count += 1;
     for (const p of img.predictions) {
-      if (!sums[p.tagName]) sums[p.tagName] = 0;
-      sums[p.tagName] += p.probability;
+      const mapped = mapLabel(p.tagName);
+
+      if (!sums[mapped]) sums[mapped] = 0;
+      sums[mapped] += p.probability;
     }
   }
 
@@ -77,7 +100,8 @@ function getMaxLabel(probMap) {
     }
   }
 
-  return { label: bestLabel, probability: bestProb };
+  const mapped = mapLabel(bestLabel);
+  return { label: mapped, probability: bestProb };
 }
 
 app.get("/", (req, res) => {
